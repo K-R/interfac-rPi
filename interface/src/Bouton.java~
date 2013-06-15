@@ -1,0 +1,89 @@
+
+import java.awt.Color;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+import javax.swing.JButton;
+
+public class Bouton extends JButton{
+	private String name;
+	private Image img;
+	private boolean status;
+	public Bouton(String str, boolean statut){
+		super(str);
+		try {
+			status = statut;
+			if(status==false){
+				img = ImageIO.read(getClass().getResource("images/red_button.png"));
+				this.name = "OFF";
+			}
+			else{
+				img = ImageIO.read(getClass().getResource("images/green_button.png"));
+				this.name = "ON";
+			}
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		setBorderPainted(false);
+		setContentAreaFilled(false);
+	}
+ 
+	public void paintComponent(Graphics g){
+		Graphics2D g2d = (Graphics2D)g;
+		g2d.drawImage(img, 0, 0, this.getWidth(), this.getHeight(), this);
+		g2d.setColor(Color.black);
+		if(this.name=="loading" || this.name=="waiting"){
+			g2d.drawString(this.name, this.getWidth() / 2 - (this.getWidth() /  2 /4)-1, (this.getHeight() / 2) + 5);
+		}
+		else{
+			g2d.drawString(this.name, this.getWidth() / 2 - (this.getWidth() /  2 /4)-16, (this.getHeight() / 2) + 5);
+		}
+	}
+
+	public void start(){
+		try {
+			img = ImageIO.read(getClass().getResource("images/green_button.png"));
+			this.name="ON";
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void stop(){
+		try {
+			img = ImageIO.read(getClass().getResource("images/red_button.png"));
+			this.name="OFF";
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void enCours(){
+		try {
+			img = ImageIO.read(getClass().getResource("images/yellow_button1.png"));
+			this.name="loading";
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void enAttente(){
+		try {
+			img = ImageIO.read(getClass().getResource("images/yellow_button.png"));
+			this.name="waiting";
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+}
+

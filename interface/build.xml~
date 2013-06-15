@@ -1,0 +1,62 @@
+<project name="interface" default="dist" basedir=".">
+  <!-- Property definition -->
+  <property name="src" location="src"/>
+  <property name="build" location="build"/>
+  <property name="bin"  location="bin"/>
+  <property name="deps"  location="dep"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compile" depends="init"
+	  description="compile the source " >
+    <!-- Compile the java code from ${src} into ${build} -->
+    <javac srcdir="${src}" destdir="${build}" includeantruntime="false">
+      <classpath>
+	<pathelement path="${classpath}" />
+	<fileset dir="${deps}">
+	  <include name="**/*.jar"/>
+	</fileset>
+      </classpath>
+    </javac>
+    <copy todir="${build}">
+      <fileset dir="${src}" excludes="**/*.java"/>
+    </copy>
+	<copy todir="${bin}">
+      <fileset dir="${src}" includes="**/*.sh"/>
+    </copy>
+  </target>
+	<chmod file="${bin}/getip.sh" perm="+x" type="both"/>
+
+  <target name="dist" depends="compile"
+	  description="generate the distribution" >
+    <!-- Create the distribution directory -->
+    <mkdir dir="${bin}"/>
+
+    <!-- Put everything in ${build} + external jar in /dep into the Robots-${DSTAMP}.jar file -->
+    <jar jarfile="${bin}/interface.jar" basedir="${build}">
+      <zipgroupfileset includes="*.jar" dir="${deps}"/>
+      <manifest>
+        <attribute name="Main-Class" value="Main"/>
+      </manifest>
+
+        <fileset dir="${src}/images">
+            <include name="images/**/*.png" />
+		<include name="images/**/*.jpg" />
+        </fileset>
+    </jar>
+
+    <echo message="Vous pouvez lancer le programme depuis /bin avec la commande java -jar interface.jar $arguments$"/>
+  </target>
+
+  <target name="clean"
+	  description="clean up" >
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}"/>
+    <delete dir="${bin}"/>
+  </target>
+</project>

@@ -1,0 +1,287 @@
+import java.awt.BorderLayout;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+
+import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JTable;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+
+import java.awt.Component;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import javax.swing.JComboBox;
+import java.util.LinkedList;
+//import ButtonEditor.ButtonListener;
+import java.util.*;
+
+public class Fenetre extends JFrame{
+	private snmp objSNMP;	
+	private Bouton bouton1;
+	private Bouton bouton2;
+	private Bouton bouton3;
+	private Bouton bouton4;
+	private Bouton bouton5;
+	private Bouton bouton6;
+	private Bouton bouton7;
+	private Bouton bouton8;
+	private Bouton[] tabBouton = new Bouton[8];
+
+	private String[][] tabIp;
+	private Integer cmpt=0;
+	private Integer cmpt2=0;
+
+	private Panneau pan;
+	private JTable tableau;
+	private String[] comboData;
+
+	JComboBox combo;
+	private Os OSboot;
+
+	private LinkedList<Job> JobList = new LinkedList<Job>();
+
+	public Fenetre(String cheminTFTP, snmp Snmp){
+		
+		File f = new File(cheminTFTP+"/kernels");
+		ArrayList<String> kernelList = new ArrayList<String>(Arrays.asList(f.list()));
+		
+		comboData = kernelList.toArray(new String[kernelList.size()]);
+
+		OSboot = new Os(cheminTFTP, Snmp);
+		//caractéristiques de la fenêtre
+		this.setLocation(20,50);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setTitle("Commande à distance des Raspberry Pi");
+		this.setSize(880, 434);
+		this.setResizable(false);
+
+		objSNMP = Snmp;
+		bouton1 = new Bouton("", objSNMP.getEtat(1));
+		bouton2 = new Bouton("", objSNMP.getEtat(2));
+		bouton3 = new Bouton("", objSNMP.getEtat(3));
+		bouton4 = new Bouton("", objSNMP.getEtat(4));
+		bouton5 = new Bouton("", objSNMP.getEtat(5));
+		bouton6 = new Bouton("", objSNMP.getEtat(6));
+		bouton7 = new Bouton("", objSNMP.getEtat(7));
+		bouton8 = new Bouton("", objSNMP.getEtat(8));
+		pan = new Panneau();
+
+		tabBouton[0]=bouton1;
+		tabBouton[1]=bouton2;
+		tabBouton[2]=bouton3;
+		tabBouton[3]=bouton4;
+		tabBouton[4]=bouton5;
+		tabBouton[5]=bouton6;
+		tabBouton[6]=bouton7;
+		tabBouton[7]=bouton8;
+		//positionnement des boutons sur les ports
+		bouton1.setBounds(88,332,73,56);
+		bouton2.setBounds(177,332,73,56);
+		bouton3.setBounds(266,332,73,56);
+		bouton4.setBounds(355,332,73,56);
+		bouton5.setBounds(450,332,73,56);
+		bouton6.setBounds(539,332,73,56);
+		bouton7.setBounds(628,332,73,56);
+		bouton8.setBounds(716,332,73,56);
+		pan.setBounds(0,258,880,175);
+
+		for(int i=0; i<=7; i++){
+			this.getContentPane().add(tabBouton[i]);
+		}
+		this.getContentPane().add(pan);
+
+		String  title[] = {"Port Number", "Kernel to load", "IP address", "(Re)Start the board", "Shutdown the board"};
+		JComboBox combo = new JComboBox(comboData);
+
+		//combo.addItemListener(new ItemState());
+  
+                tabIp=objSNMP.snmpGetAllAddress();
+                //Données de notre tableau
+		Object[][] data = {  
+				{"1", comboData[0], tabIp[0][0], "start", "stop"},
+				{"2", comboData[0], tabIp[1][0], "start", "stop"},
+				{"3", comboData[0], tabIp[2][0], "start", "stop"},
+				{"4", comboData[0], tabIp[3][0], "start", "stop"},
+				{"5", comboData[0], tabIp[4][0], "start", "stop"},
+				{"6", comboData[0], tabIp[5][0], "start", "stop"},
+				{"7", comboData[0], tabIp[6][0], "start", "stop"},
+				{"8", comboData[0], tabIp[7][0], "start", "stop"},
+		};
+
+		ZModel zModel = new ZModel(data, title);
+
+		//caractéristiques du tableau
+		this.tableau = new JTable(zModel);
+		this.tableau.setRowHeight(30);
+		this.tableau.getColumn("(Re)Start the board").setCellEditor(new ButtonEditor(new JCheckBox()));
+		this.tableau.getColumn("(Re)Start the board").setCellRenderer(new ButtonRenderer());
+		this.tableau.getColumn("Shutdown the board").setCellEditor(new ButtonEditor(new JCheckBox()));
+		this.tableau.getColumn("Shutdown the board").setCellRenderer(new ButtonRenderer());
+		this.tableau.getColumn("Kernel to load").setCellEditor(new DefaultCellEditor(combo));
+		this.tableau.getColumn("Kernel to load").setCellRenderer(new ComboRenderer());
+		tableau.setRowSelectionAllowed(false);
+		DefaultTableCellRenderer custom = new DefaultTableCellRenderer();
+		custom.setHorizontalAlignment(JLabel.CENTER);
+		tableau.getColumnModel().getColumn(0).setCellRenderer(custom);
+		tableau.getColumnModel().getColumn(2).setCellRenderer(custom);
+		tableau.setBounds(0,180,880,290);
+		this.getContentPane().add(new JScrollPane(tableau), BorderLayout.CENTER);
+
+		this.setVisible(true);
+		//lancement des 2 types de thread
+		//while(true){
+		//	if(cmpt%5==0){
+				UnThread thread = new UnThread();//thread à lancer toutes les 5s pour rafraichir les IP
+				thread.start();
+		//	}
+			UnThread2 thread2 = new UnThread2();//tread à lancer toutes les seconde pour checker si y'a des jobs à lancer
+			thread2.start();
+		//	repaint();
+		/*	try {
+				Thread.sleep(1000);
+			}
+			catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}*/
+	}
+	//Thread pour mettre à jour les addresses IP
+	private class UnThread extends Thread{
+		public void run() {
+			while(true){
+				System.out.println("\tmaj addresses IP");
+				tabIp=objSNMP.snmpGetAllAddress();
+				for(int i=0; i<=7; i++){
+					tableau.setValueAt(tabIp[i][0], i, tableau.getColumnModel().getColumnIndex("IP address"));
+				}
+				tableau.repaint();
+				try{
+					UnThread.sleep(5000);
+				}
+				catch (InterruptedException e){
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	//Thread pour checker si y'a des jobs en attente et les lancer s'il n'y en a pas d'autre en cours d'éxécution
+	private class UnThread2 extends Thread{
+		public void run() {
+			while(true){
+				//si cmpt2 n'est pas nul on attend en le décrémentant d'une seconde
+				if(cmpt2>0){
+					cmpt2--;
+					if(cmpt2==0){
+						int i= JobList.removeFirst().getPort()-1;
+						tabBouton[i].start();
+						tabBouton[i].repaint();
+					}
+				}
+				else if (JobList.size()!=0){
+					//aller chercher le premier élément de la queue et le lancer
+					cmpt2=30;
+					Job FirstJob=JobList.getFirst();
+					int i= FirstJob.getPort();
+					tabBouton[i-1].enCours();
+					tabBouton[i-1].repaint();
+					OSboot.lancementOs(FirstJob.getKernelName(),i);
+				}
+
+				try{
+					UnThread2.sleep(1000);
+				}
+				catch (InterruptedException e){
+					e.printStackTrace();
+				}
+
+			}
+		}
+	}
+	//Gestion des boutons start et stop
+	public class ButtonEditor extends DefaultCellEditor {
+		protected Fenetre fenetre;
+		protected JButton button;
+		private boolean isPushed;
+		private ButtonListener bListener = new ButtonListener();
+
+		public ButtonEditor(JCheckBox checkBox) {
+			super(checkBox);
+			button = new JButton();
+			button.addActionListener(bListener);
+		}
+
+		public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+			bListener.setRow(row);
+			bListener.setColumn(column);
+			bListener.setTable(table);
+			button.setBorderPainted(true);
+			if (value=="start" || value=="stop"){
+				button.setText((String)value);
+			}
+			return button;
+		}
+
+		//Our button listener
+		class ButtonListener implements ActionListener{
+			private Iterator<Job> it; 
+			private int row;
+			private JTable table;
+			private JButton button;
+
+			public void setColumn(int col){}
+			
+			public void setRow(int row){this.row = row;}
+			
+			public void setTable(JTable table){this.table = table;}
+			
+			public JButton getButton(){return this.button;}
+			
+			public void actionPerformed(ActionEvent event) {
+				it = JobList.iterator();
+				int numPort = this.row + 1;
+				String OS = (String) (table.getModel()).getValueAt(this.row, 1);
+				System.out.println(((JButton)event.getSource()).getText()+" du port numéro : "+numPort+"l'OS à considérer est : "+OS);
+				//numPort=Integer.valueOf((String) ((AbstractTableModel)table.getModel()).getValueAt(this.row, 0));
+				if(((JButton)event.getSource()).getText()=="start"){
+					if(JobList.size()!=0 && JobList.getFirst().getPort()!=numPort){
+						tabBouton[numPort-1].enAttente();
+					}
+					JobList.add(new Job(numPort, OS));
+				}
+				else{
+						tabBouton[numPort-1].stop();
+						OSboot.stopOs(numPort);
+						if(JobList.size()!=0 && JobList.getFirst().getPort()==numPort){
+							cmpt2=0;
+						}
+
+						int compt=0;
+						while(it.hasNext()){
+					
+							if(it.next().getPort()==numPort){
+								it.remove();
+							}
+							compt++;
+						}
+				}
+				repaint();
+			}
+		}
+	}
+}
+
