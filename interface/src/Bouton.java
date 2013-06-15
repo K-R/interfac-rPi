@@ -10,7 +10,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
 
-//defines the buttons the see the status of the different ports
+// Defines the buttons the see the status of the different ports
 public class Bouton extends JButton{
 	private String name;
 	private Image img;
